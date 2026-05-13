@@ -19,7 +19,7 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 
 MIN_SEGMENT_WORDS = 30
 MAX_SEGMENT_WORDS = 400
-MAX_CONCURRENT_REQUESTS = 15
+MAX_CONCURRENT_REQUESTS = 20
 
 TRANSCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)

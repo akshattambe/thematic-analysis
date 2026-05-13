@@ -188,7 +188,7 @@ def _run_gioia_pipeline(job_id: str, tmp_dir: Path, out_dir: Path) -> None:
                                 "theme_count": dim.theme_count}})
 
         second_order, aggregate = build_gioia_structure(
-            concepts, min_themes=5, max_themes=12,
+            concepts, min_themes=5, max_themes=18,
             on_progress=lambda msg: emit({"type": "theme_progress", "message": msg}),
             on_theme_ready=on_theme_ready,
             on_dimension_ready=on_dimension_ready,
@@ -332,6 +332,18 @@ async def download_excel(job_id: str):
                 media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
     raise HTTPException(404, "Excel not ready")
+
+
+@app.get("/api/download/{job_id}/json")
+async def download_json(job_id: str):
+    if job_id not in jobs:
+        raise HTTPException(404, "Job not found")
+    out_dir = Path(jobs[job_id]["out_dir"])
+    for name in ("gioia_results.json", "analysis_results.json"):
+        path = out_dir / name
+        if path.exists():
+            return FileResponse(path, filename=name, media_type="application/json")
+    raise HTTPException(404, "JSON not ready")
 
 
 if __name__ == "__main__":

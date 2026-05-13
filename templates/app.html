@@ -299,11 +299,19 @@ footer{text-align:center;padding:2rem 1rem;color:var(--muted);font-size:.8rem;ma
     <div class="d-flex gap-2 mb-4 flex-wrap">
       <a id="btn-report" href="#" target="_blank"
          class="btn btn-primary px-4 fw-semibold" style="background:var(--accent);border-color:var(--accent);">
-        Open Full Report ↗
+        Open Report ↗
+      </a>
+      <a id="btn-pdf" href="#" target="_blank"
+         class="btn px-4 fw-semibold" style="background:#c0392b;color:white;border-color:#c0392b;">
+        Save as PDF
       </a>
       <a id="btn-excel" href="#" class="btn px-4 fw-semibold"
          style="background:#217346;color:white;border-color:#217346;">
         Download Excel
+      </a>
+      <a id="btn-json" href="#" class="btn px-4 fw-semibold"
+         style="background:#6c3483;color:white;border-color:#6c3483;">
+        Download JSON
       </a>
       <button onclick="resetUI()" class="btn btn-outline-secondary px-4 fw-semibold">New Analysis</button>
     </div>
@@ -539,7 +547,9 @@ function showResults(data){
   document.getElementById('analysis-section').style.display='none';
   document.getElementById('results-section').style.display='block';
   document.getElementById('btn-report').href=`/api/report/${jobId}`;
+  document.getElementById('btn-pdf').href=`/api/report/${jobId}?print=1`;
   document.getElementById('btn-excel').href=`/api/download/${jobId}/excel`;
+  document.getElementById('btn-json').href=`/api/download/${jobId}/json`;
   const m=data.methodology||'braun_clarke';
   if(m==='gioia'){
     const s=data.stats;

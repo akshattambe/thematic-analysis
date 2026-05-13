@@ -4,6 +4,7 @@ Usage: python app.py   then open http://localhost:8000
 """
 import asyncio
 import json
+import logging
 import shutil
 import tempfile
 import threading
@@ -12,6 +13,8 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
+
+logging.basicConfig(level=logging.INFO)
 
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile

@@ -100,27 +100,7 @@ def test_frequency_filter_fallback_still_works():
     assert len(sig) > 0
 
 
-# ── Streaming + concept cap tests ────────────────────────────────────────────
-
-def test_clustering_cap_is_300():
-    """The themer module must define _CLUSTERING_CAP = 300."""
-    from src_gioia.themer import _CLUSTERING_CAP
-    assert _CLUSTERING_CAP == 300, (
-        f"Expected _CLUSTERING_CAP=300, got {_CLUSTERING_CAP}. "
-        "Cap must be 300 to avoid token budget exhaustion on the streaming API call."
-    )
-
-
-def test_clustering_cap_enforced_at_300():
-    """Even with 1000 unique concepts, only 300 are sent to Claude for clustering."""
-    sig = {f"concept_{i}": (1000 - i) for i in range(1000)}  # 1000 concepts, varying freq
-    from src_gioia.themer import _CLUSTERING_CAP
-    clustering_sig = dict(sorted(sig.items(), key=lambda x: -x[1])[:_CLUSTERING_CAP])
-    assert len(clustering_sig) == 300
-    # Confirm they are the top-300 by frequency
-    top_keys = [k for k, _ in sorted(sig.items(), key=lambda x: -x[1])[:300]]
-    assert list(clustering_sig.keys()) == top_keys
-
+# ── Streaming tests ───────────────────────────────────────────────────────────
 
 def test_clustering_uses_streaming():
     """_cluster_second_order must call messages.stream(), not messages.create()."""
@@ -141,42 +121,82 @@ def test_no_messages_create_in_themer():
     )
 
 
-# ── Unmatched concept assignment tests ───────────────────────────────────────
+# ── Deduplication tests ───────────────────────────────────────────────────────
 
-def test_best_theme_idx_keyword_overlap():
-    """_best_theme_idx returns the index of the theme with most token overlap."""
-    from src_gioia.themer import _best_theme_idx
-    themes = [
-        {"name": "Leadership Challenges", "description": "Issues around managerial authority"},
-        {"name": "Communication Barriers", "description": "Breakdowns in information sharing"},
-        {"name": "Resource Constraints", "description": "Lack of budget and staffing"},
-    ]
-    # "communication breakdown" overlaps best with theme[1]
-    assert _best_theme_idx("communication breakdown", themes) == 1
-    # "budget shortfall" overlaps best with theme[2]
-    assert _best_theme_idx("budget shortfall", themes) == 2
-
-
-def test_best_theme_idx_fallback_returns_zero():
-    """When no overlap, _best_theme_idx defaults to index 0."""
-    from src_gioia.themer import _best_theme_idx
-    themes = [
-        {"name": "Alpha Dynamics", "description": "XYZ phenomena"},
-        {"name": "Beta Mechanisms", "description": "ABC processes"},
-    ]
-    # "zzz unrelated concept" has no overlap — should fall back to 0
-    idx = _best_theme_idx("zzz unrelated concept", themes)
-    assert idx == 0
+def test_dedup_merges_near_identical_labels():
+    """Near-identical labels (Jaccard >= 0.6) should be merged into one canonical."""
+    from src_gioia.themer import _deduplicate_concepts
+    sig = {
+        "lack of trust": 5,       # canonical (higher freq)
+        "lack of organizational trust": 3,  # Jaccard with above: 2/4 = 0.5 — below threshold
+        "trust deficit": 2,        # Jaccard with "lack of trust": 0/3 = 0 — stays separate
+        "communication breakdown": 4,
+        "breakdown in communication": 2,  # Jaccard: 2/3 = 0.67 — merges into above
+    }
+    deduped, alias_map = _deduplicate_concepts(sig, threshold=0.6)
+    # "breakdown in communication" should merge into "communication breakdown"
+    assert alias_map["breakdown in communication"] == "communication breakdown"
+    assert "breakdown in communication" not in deduped
+    # merged count should be summed
+    assert deduped["communication breakdown"] == 6  # 4 + 2
 
 
-def test_unmatched_concepts_assigned_in_build():
-    """build_gioia_structure must contain code to assign unmatched concepts."""
-    themer_source = (Path(__file__).parent.parent / "src_gioia" / "themer.py").read_text()
-    assert "unmatched_keys" in themer_source, (
-        "themer.py must assign concepts beyond _CLUSTERING_CAP to the nearest theme."
+def test_dedup_alias_map_covers_all_originals():
+    """Every original label must appear in alias_map (either as canonical or merged)."""
+    from src_gioia.themer import _deduplicate_concepts
+    sig = {f"concept {i}": i + 1 for i in range(20)}
+    deduped, alias_map = _deduplicate_concepts(sig)
+    assert set(alias_map.keys()) == set(sig.keys()), (
+        "alias_map must contain an entry for every original concept label."
     )
-    assert "_best_theme_idx" in themer_source, (
-        "themer.py must use _best_theme_idx for unmatched concept assignment."
+
+
+def test_dedup_canonical_maps_to_itself():
+    """A canonical label must map to itself in alias_map."""
+    from src_gioia.themer import _deduplicate_concepts
+    sig = {"alpha beta": 10, "gamma delta": 5}
+    _, alias_map = _deduplicate_concepts(sig)
+    for canon in ("alpha beta", "gamma delta"):
+        assert alias_map[canon] == canon, f"Canonical label '{canon}' should map to itself."
+
+
+def test_dedup_reduces_count_on_large_dataset():
+    """Deduplication collapses word-order variants (same token set, Jaccard=1.0)."""
+    from src_gioia.themer import _deduplicate_concepts
+    # 25 pairs: "word_N shared" and "shared word_N" have the same token set → Jaccard=1.0
+    sig = {}
+    for i in range(25):
+        sig[f"word_{i} shared"] = 10   # higher freq → becomes canonical
+        sig[f"shared word_{i}"] = 5    # word-order variant → merges into canonical
+    deduped, _ = _deduplicate_concepts(sig, threshold=0.6)
+    assert len(deduped) < len(sig), "Deduplication should collapse word-order duplicates."
+    assert len(deduped) == 25, "Each of the 25 synonym pairs should collapse to one canonical."
+
+
+def test_dedup_no_cross_merge_on_distinct_concepts():
+    """Completely distinct labels should not be merged."""
+    from src_gioia.themer import _deduplicate_concepts
+    sig = {
+        "leadership vision": 5,
+        "resource allocation": 4,
+        "stakeholder engagement": 3,
+        "process efficiency": 2,
+    }
+    deduped, alias_map = _deduplicate_concepts(sig, threshold=0.6)
+    # All labels are distinct — no merging should occur
+    assert len(deduped) == len(sig), "Distinct labels must not be merged."
+    for label in sig:
+        assert alias_map[label] == label
+
+
+def test_dedup_present_in_themer():
+    """themer.py must call _deduplicate_concepts before clustering."""
+    themer_source = (Path(__file__).parent.parent / "src_gioia" / "themer.py").read_text()
+    assert "_deduplicate_concepts" in themer_source, (
+        "themer.py must deduplicate concepts before sending to Claude."
+    )
+    assert "alias_map" in themer_source, (
+        "themer.py must use alias_map to recover all original concepts after clustering."
     )
 
 
@@ -215,11 +235,11 @@ def test_max_themes_capped_by_concept_count():
     """
     With a small concept set (single interview), max_t must be capped so
     Claude is never asked for more themes than the data can support.
-    Each theme requires at least 3 concepts: max_t <= len(sig) // 3.
+    Each theme requires at least 3 concepts: max_t <= len(deduped) // 3.
     """
     themer_source = (Path(__file__).parent.parent / "src_gioia" / "themer.py").read_text()
-    assert "max_t = max(min_t, min(max_t, len(sig) // 3))" in themer_source, (
-        "themer.py must cap max_t based on available concepts to prevent "
+    assert "max_t = max(min_t, min(max_t, len(deduped) // 3))" in themer_source, (
+        "themer.py must cap max_t based on deduplicated concept count to prevent "
         "empty-theme errors on small datasets."
     )
 

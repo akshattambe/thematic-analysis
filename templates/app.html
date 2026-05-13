@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thematic Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<style>
+:root {
+  --accent: #2E86AB; --accent-dark: #1a6a8a; --accent-light: #e8f4fd;
+  --green: #44BBA4; --bg: #f0f4f8; --surface: #fff;
+  --text: #1a2536; --text2: #4a5568; --muted: #718096;
+  --border: #e2e8f0;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08),0 1px 8px rgba(0,0,0,.04);
+  --shadow: 0 2px 8px rgba(0,0,0,.08),0 4px 20px rgba(0,0,0,.05);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06);
+  --r: 12px; --r-lg: 16px;
+}
+*{box-sizing:border-box;}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#0d2233 0%,#1a4a6e 60%,#2E86AB 100%);color:white;padding:2.6rem 0 2.1rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.055) 1px,transparent 1px);background-size:30px 30px;}
+.hero-inner{position:relative;z-index:1;}
+.hero-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:.22rem .75rem;font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.85rem;}
+.hero h1{font-size:2rem;font-weight:700;margin-bottom:.3rem;letter-spacing:-.02em;}
+.hero p{opacity:.72;margin:0;font-size:.93rem;}
+
+/* Methodology cards */
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+.method-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--r);padding:1.1rem 1.3rem;cursor:pointer;transition:all .2s;user-select:none;}
+.method-card:hover{border-color:#aed6f1;box-shadow:var(--shadow-sm);}
+.method-card.active{border-color:var(--accent);background:linear-gradient(135deg,#f0f8ff,#e8f4fd);box-shadow:0 0 0 3px rgba(46,134,171,.12);}
+.method-icon{font-size:1.4rem;margin-bottom:.45rem;display:block;}
+.mc-name{font-weight:700;font-size:.95rem;margin-bottom:.2rem;}
+.mc-tiers{font-size:.77rem;color:var(--muted);line-height:1.5;}
+.mc-badge{display:inline-block;background:var(--accent);color:white;font-size:.63rem;padding:.1rem .48rem;border-radius:20px;font-weight:700;margin-left:.4rem;vertical-align:middle;letter-spacing:.05em;}
+
+/* Upload zone */
+.upload-zone{border:2px dashed #b0c4d8;border-radius:var(--r-lg);background:var(--surface);padding:2.8rem 2rem;text-align:center;cursor:pointer;transition:all .2s;user-select:none;}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:var(--accent-light);box-shadow:0 0 0 4px rgba(46,134,171,.08);}
+.dz-icon{width:54px;height:54px;margin:0 auto .9rem;background:var(--accent-light);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.75rem;transition:transform .2s;}
+.upload-zone:hover .dz-icon{transform:translateY(-2px);}
+.upload-zone h4{font-size:1.05rem;font-weight:600;margin-bottom:.3rem;}
+.upload-zone p{color:var(--muted);font-size:.86rem;margin-bottom:1rem;}
+
+/* File list */
+.file-item{display:flex;align-items:center;gap:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.58rem 1rem;margin-bottom:.4rem;box-shadow:var(--shadow-sm);font-size:.875rem;}
+.file-item .fname{flex:1;font-weight:500;}
+.file-item .fsize{color:var(--muted);font-size:.78rem;}
+
+/* Stage tracker */
+.stage-track{display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.3rem;margin-bottom:1.2rem;box-shadow:var(--shadow-sm);}
+.stage-step{display:flex;align-items:center;gap:.45rem;flex:1;}
+.stage-step:not(:last-child){margin-right:.3rem;}
+.step-line{flex:1;height:2px;background:var(--border);border-radius:2px;transition:background .4s;margin:0 .4rem;}
+.step-circle{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .35s;}
+.stage-step.active .step-circle{border-color:var(--accent);background:var(--accent);color:white;box-shadow:0 0 0 4px rgba(46,134,171,.2);}
+.stage-step.done .step-circle{border-color:var(--green);background:var(--green);color:white;}
+.stage-step.done .step-line{background:var(--green);}
+.step-lbl{font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);white-space:nowrap;transition:color .35s;}
+.stage-step.active .step-lbl{color:var(--accent);}
+.stage-step.done .step-lbl{color:var(--green);}
+
+/* Status bar */
+.status-bar{display:flex;align-items:center;gap:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.72rem 1.2rem;margin-bottom:1.2rem;box-shadow:var(--shadow-sm);font-size:.875rem;font-weight:500;min-height:46px;}
+.status-bar.thinking .status-text{animation:pulse 1.8s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.42}}
+
+/* Progress */
+.prog-wrap{background:#e2e8f0;border-radius:6px;height:8px;overflow:hidden;}
+.prog-bar{background:linear-gradient(90deg,var(--accent),var(--green));height:8px;border-radius:6px;transition:width .5s ease;width:0%;}
+
+/* Live panels */
+.live-panel{background:var(--surface);border-radius:var(--r);padding:1.2rem 1.4rem;box-shadow:var(--shadow);height:100%;min-height:260px;border:1px solid var(--border);}
+.panel-label{font-size:.67rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:.45rem;}
+.live-dot{width:8px;height:8px;border-radius:50%;display:inline-block;animation:pulse 1.8s ease-in-out infinite;}
+.big-num{font-size:3rem;font-weight:700;color:var(--accent);line-height:1;letter-spacing:-.03em;}
+.big-sub{font-size:.8rem;color:var(--muted);margin-top:.4rem;}
+
+/* Concept cloud */
+.code-pill{display:inline-block;border-radius:20px;padding:.2rem .7rem;margin:.2rem .15rem;white-space:nowrap;font-weight:500;border:1px solid transparent;transition:font-size .4s ease;}
+.code-pill.new{animation:popIn .45s cubic-bezier(.175,.885,.32,1.275) both;}
+@keyframes popIn{from{transform:scale(.15);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* Theme / dim chips */
+.theme-chip{border-left:3px solid;border-radius:0 8px 8px 0;background:#f8fafc;padding:.45rem .9rem;margin-bottom:.45rem;font-size:.83rem;font-weight:600;animation:slideIn .4s ease both;}
+.dim-chip{border-radius:10px;padding:.55rem 1rem;margin-bottom:.5rem;font-size:.84rem;font-weight:700;color:white;animation:slideIn .5s ease both;box-shadow:0 2px 8px rgba(0,0,0,.14);}
+@keyframes slideIn{from{transform:translateX(-10px);opacity:0}to{transform:translateX(0);opacity:1}}
+.theme-count-badge{background:rgba(255,255,255,.22);border-radius:20px;padding:.08rem .5rem;font-size:.74rem;font-weight:600;margin-left:.4rem;}
+
+/* Stat cards */
+.stat-card{background:var(--surface);border-radius:var(--r);padding:1.4rem;text-align:center;box-shadow:var(--shadow);border:1px solid var(--border);transition:transform .2s,box-shadow .2s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.stat-card .num{font-size:2.4rem;font-weight:700;color:var(--accent);line-height:1;letter-spacing:-.03em;}
+.stat-card .lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.4rem;}
+@keyframes fadeUp{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.stat-reveal{animation:fadeUp .5s ease both;}
+
+/* Code freq bars */
+.cf-item{display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem;font-size:.83rem;}
+.cf-name{min-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
+.cf-bar-w{flex:1;background:var(--bg);border-radius:4px;height:6px;}
+.cf-bar{background:linear-gradient(90deg,var(--accent),var(--green));height:6px;border-radius:4px;transition:width .6s ease;}
+.cf-count{min-width:26px;text-align:right;color:var(--muted);font-size:.78rem;}
+
+/* BC theme cards */
+.theme-card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:1.4rem;overflow:hidden;animation:fadeUp .5s ease both;}
+.tc-header{padding:1.1rem 1.5rem;color:white;display:flex;align-items:center;gap:1rem;}
+.tc-num{font-size:1.8rem;font-weight:700;opacity:.22;line-height:1;}
+.tc-body{padding:1.3rem 1.5rem;}
+.tc-description{line-height:1.85;font-size:.92rem;white-space:pre-line;margin-bottom:1rem;color:var(--text2);}
+.code-badge{display:inline-block;background:var(--accent-light);color:#1a5276;border:1px solid #aed6f1;border-radius:20px;padding:.17rem .68rem;font-size:.76rem;margin:.14rem;font-weight:500;}
+blockquote.quote{border-left:3px solid var(--accent);padding:.72rem 1.1rem;background:#f8fbfd;border-radius:0 8px 8px 0;font-style:italic;margin:.5rem 0;font-size:.88rem;color:var(--text2);}
+blockquote.quote .src{font-style:normal;font-size:.74rem;color:var(--muted);margin-top:.3rem;}
+
+/* Gioia dim cards */
+.dim-card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:2rem;overflow:hidden;animation:fadeUp .5s ease both;transition:box-shadow .2s;}
+.dim-card:hover{box-shadow:var(--shadow-lg);}
+.dim-header{padding:1.25rem 1.6rem;color:white;display:flex;align-items:center;gap:1.1rem;}
+.dim-num{font-size:2rem;font-weight:700;opacity:.2;line-height:1;}
+.dim-body{padding:1.6rem;}
+.dim-description{line-height:1.88;white-space:pre-line;margin-bottom:1.5rem;font-size:.92rem;color:var(--text2);}
+.theme-block{border:1px solid var(--border);border-radius:10px;margin-bottom:1rem;overflow:hidden;}
+.theme-block-hdr{background:#f8fafc;padding:.65rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem;}
+.theme-block-hdr h6{margin:0;font-size:.88rem;font-weight:700;flex:1;}
+.theme-block-body{padding:1rem 1.1rem;}
+.theme-desc-text{font-size:.86rem;color:var(--text2);line-height:1.75;font-style:italic;margin-bottom:.8rem;}
+.foc-item{display:flex;gap:.75rem;padding:.45rem .65rem;margin-bottom:.3rem;background:#f8fbfd;border-radius:7px;font-size:.82rem;border:1px solid #edf2f7;}
+.foc-label{font-weight:600;min-width:140px;flex-shrink:0;color:var(--text);}
+.foc-verbatim{color:var(--muted);font-style:italic;}
+
+/* DS table */
+.ds-table-wrap{overflow-x:auto;border-radius:var(--r);box-shadow:var(--shadow);}
+.ds-tbl{width:100%;border-collapse:collapse;font-size:.84rem;}
+.ds-tbl thead th{background:#0d2233;color:rgba(255,255,255,.9);padding:.78rem 1rem;text-align:left;font-size:.71rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
+.ds-tbl td{padding:.55rem .85rem;vertical-align:top;border-bottom:1px solid #f0f4f8;}
+.ds-concept-label{font-weight:600;display:block;}
+.ds-verbatim{display:block;font-style:italic;color:var(--muted);font-size:.77rem;margin-top:.15rem;}
+.ds-theme-cell{font-weight:600;border-left:3px solid;}
+.ds-dim-cell{font-weight:700;border-left:4px solid;}
+
+/* Section titles */
+.sec-title{font-size:1.2rem;font-weight:700;color:var(--text);margin:2rem 0 1rem;display:flex;align-items:center;gap:.6rem;}
+.sec-title::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,var(--accent),transparent);border-radius:2px;}
+
+/* Buttons */
+.btn-analyze{background:linear-gradient(135deg,var(--accent),#1e7aa0);color:white;border:none;padding:.75rem 2.2rem;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(46,134,171,.32);letter-spacing:.01em;}
+.btn-analyze:hover:not(:disabled){background:linear-gradient(135deg,#1e7aa0,#155a78);box-shadow:0 6px 16px rgba(46,134,171,.42);transform:translateY(-1px);}
+.btn-analyze:disabled{opacity:.5;cursor:default;box-shadow:none;transform:none;}
+
+/* Spinner */
+.spinner{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(46,134,171,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+footer{text-align:center;padding:2rem 1rem;color:var(--muted);font-size:.8rem;margin-top:2.5rem;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="container hero-inner">
+    <div class="hero-badge">✦ AI-powered qualitative analysis</div>
+    <h1>Thematic Analysis</h1>
+    <p>Upload transcripts &rarr; watch concepts, themes &amp; dimensions emerge in real time</p>
+  </div>
+</div>
+
+<div class="container py-4">
+
+  <!-- ── UPLOAD SECTION ── -->
+  <div id="upload-section">
+
+    <div class="method-grid mb-4">
+      <div class="method-card active" data-method="gioia" onclick="selectMethod('gioia')">
+        <span class="method-icon">⊞</span>
+        <div class="mc-name">Gioia Methodology <span class="mc-badge">Default</span></div>
+        <div class="mc-tiers">3-tier: 1st-order concepts → 2nd-order themes → aggregate dimensions</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.4rem;">
+          Gioia, Corley &amp; Hamilton (2013) · Grounded theory · Informant language preserved
+        </div>
+      </div>
+      <div class="method-card" data-method="braun_clarke" onclick="selectMethod('braun_clarke')">
+        <span class="method-icon">≡</span>
+        <div class="mc-name">Braun &amp; Clarke</div>
+        <div class="mc-tiers">2-tier: codes → themes</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.4rem;">
+          Braun &amp; Clarke (2006) · Inductive thematic analysis
+        </div>
+      </div>
+    </div>
+
+    <div id="upload-zone" class="upload-zone mb-3"
+         ondragover="onDragOver(event)" ondragleave="onDragLeave()" ondrop="onDrop(event)"
+         onclick="document.getElementById('file-input').click()">
+      <div class="dz-icon">📄</div>
+      <h4>Drop transcript files here</h4>
+      <p>Supports .txt, .docx, and .pdf &nbsp;·&nbsp; Multiple files accepted</p>
+      <span class="btn btn-outline-primary btn-sm px-4">Browse files</span>
+      <input type="file" id="file-input" multiple accept=".txt,.docx,.pdf"
+             style="display:none" onchange="onFileInput(this.files)">
+    </div>
+
+    <div id="file-list" class="mb-3"></div>
+
+    <div class="d-flex align-items-center gap-3">
+      <button id="analyze-btn" class="btn-analyze" onclick="startAnalysis()" disabled>
+        Analyze Transcripts
+      </button>
+      <span id="upload-hint" class="text-muted" style="font-size:.88rem;">Add files to begin</span>
+    </div>
+
+  </div><!-- /upload-section -->
+
+  <!-- ── ANALYSIS SECTION ── -->
+  <div id="analysis-section" style="display:none">
+
+    <!-- Numbered stage tracker -->
+    <div class="stage-track">
+      <div class="stage-step" id="ss-ingesting">
+        <div class="step-circle" id="sc-ingesting">1</div>
+        <span class="step-lbl">Ingesting</span>
+        <div class="step-line" id="sl-ingesting"></div>
+      </div>
+      <div class="stage-step" id="ss-coding">
+        <div class="step-circle" id="sc-coding">2</div>
+        <span class="step-lbl">Coding</span>
+        <div class="step-line" id="sl-coding"></div>
+      </div>
+      <div class="stage-step" id="ss-theming">
+        <div class="step-circle" id="sc-theming">3</div>
+        <span class="step-lbl">Theming</span>
+        <div class="step-line" id="sl-theming"></div>
+      </div>
+      <div class="stage-step" id="ss-reporting">
+        <div class="step-circle" id="sc-reporting">4</div>
+        <span class="step-lbl">Reporting</span>
+      </div>
+    </div>
+
+    <div id="status-bar" class="status-bar thinking">
+      <div class="spinner" id="status-spinner"></div>
+      <span class="status-text" id="status-text">Initialising…</span>
+    </div>
+
+    <div id="coding-progress" style="display:none" class="mb-3">
+      <div class="d-flex justify-content-between mb-1" style="font-size:.77rem;color:var(--muted)">
+        <span id="coding-label">Generating 1st-order concepts</span>
+        <span id="coding-counter">0 / 0</span>
+      </div>
+      <div class="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+    </div>
+
+    <div class="row g-3" id="live-panels">
+      <div class="col-12 col-md-3">
+        <div class="live-panel">
+          <div class="panel-label">
+            <span class="live-dot" style="background:var(--green)"></span>Segments
+          </div>
+          <div class="big-num" id="lv-seg-count">—</div>
+          <div class="big-sub" id="lv-seg-sub"></div>
+          <div style="margin-top:1.2rem;font-size:.77rem;color:var(--muted)" id="lv-coded-info"></div>
+        </div>
+      </div>
+      <div class="col-12 col-md-5">
+        <div class="live-panel">
+          <div class="panel-label" id="panel2-label">
+            <span class="live-dot" style="background:var(--accent);animation-delay:.3s"></span>
+            1st Order Concepts
+            <span id="lv-code-count" style="color:var(--accent);font-weight:700;letter-spacing:0;text-transform:none;font-size:.8rem;margin-left:.2rem"></span>
+          </div>
+          <div id="lv-codes-cloud" style="line-height:2.4;"></div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="live-panel">
+          <div class="panel-label" id="panel3-label">
+            <span class="live-dot" style="background:#A23B72;animation-delay:.6s"></span>
+            2nd Order Themes
+          </div>
+          <div id="lv-themes-list">
+            <div id="lv-themes-placeholder" style="color:var(--muted);font-size:.83rem;line-height:1.6;">
+              Themes appear after coding completes…
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /analysis-section -->
+
+  <!-- ── RESULTS SECTION ── -->
+  <div id="results-section" style="display:none">
+    <div class="row g-3 mb-4" id="stats-row"></div>
+
+    <div class="d-flex gap-2 mb-4 flex-wrap">
+      <a id="btn-report" href="#" target="_blank"
+         class="btn btn-primary px-4 fw-semibold" style="background:var(--accent);border-color:var(--accent);">
+        Open Full Report ↗
+      </a>
+      <a id="btn-excel" href="#" class="btn px-4 fw-semibold"
+         style="background:#217346;color:white;border-color:#217346;">
+        Download Excel
+      </a>
+      <button onclick="resetUI()" class="btn btn-outline-secondary px-4 fw-semibold">New Analysis</button>
+    </div>
+
+    <!-- Gioia results -->
+    <div id="gioia-results" style="display:none">
+      <h2 class="sec-title">Data Structure</h2>
+      <div class="mb-4" id="gioia-ds-table"></div>
+      <h2 class="sec-title">Aggregate Dimensions</h2>
+      <div id="gioia-dim-cards"></div>
+    </div>
+
+    <!-- BC results -->
+    <div id="bc-results" style="display:none">
+      <div id="codes-overview" style="display:none">
+        <h2 class="sec-title">Code Frequencies</h2>
+        <div class="bg-white rounded-3 p-3 mb-4" style="border:1px solid var(--border);box-shadow:var(--shadow-sm)">
+          <div id="codes-freq-bars"></div>
+        </div>
+      </div>
+      <h2 class="sec-title">Themes</h2>
+      <div id="theme-cards"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Thematic Analysis Tool · Powered by Anthropic Claude</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const COLORS = ["#2E86AB","#A23B72","#F18F01","#C73E1D","#3B6064",
+                "#44BBA4","#E94F37","#7B68EE","#20B2AA","#FF6B6B","#4ECDC4","#45B7D1"];
+
+let uploadedFiles=[], jobId=null, codeFreqs={}, knownCodes=new Set(),
+    renderHandle=null, selectedMethod='gioia', themeChipCount=0, dimChipCount=0;
+
+function selectMethod(method) {
+  selectedMethod = method;
+  document.querySelectorAll('.method-card').forEach(el =>
+    el.classList.toggle('active', el.dataset.method === method));
+  const isGioia = method === 'gioia';
+  const p2 = document.getElementById('panel2-label');
+  p2.innerHTML = '';
+  const dot = document.createElement('span');
+  dot.className = 'live-dot';
+  dot.style.cssText = 'background:var(--accent);animation-delay:.3s';
+  p2.appendChild(dot);
+  p2.appendChild(document.createTextNode(isGioia ? ' 1st Order Concepts' : ' Codes discovered'));
+  const cs = document.createElement('span');
+  cs.id = 'lv-code-count';
+  cs.style.cssText = 'color:var(--accent);font-weight:700;letter-spacing:0;text-transform:none;font-size:.8rem;margin-left:.3rem';
+  p2.appendChild(cs);
+  const p3 = document.getElementById('panel3-label');
+  p3.innerHTML = '<span class="live-dot" style="background:#A23B72;animation-delay:.6s"></span> ' +
+    (isGioia ? '2nd Order Themes' : 'Themes emerging');
+  document.getElementById('coding-label').textContent =
+    isGioia ? 'Generating 1st-order concepts' : 'Coding segments';
+}
+
+function onDragOver(e){e.preventDefault();document.getElementById('upload-zone').classList.add('drag-over');}
+function onDragLeave(){document.getElementById('upload-zone').classList.remove('drag-over');}
+function onDrop(e){e.preventDefault();document.getElementById('upload-zone').classList.remove('drag-over');addFiles(e.dataTransfer.files);}
+function onFileInput(files){addFiles(files);}
+
+function addFiles(list){
+  for(const f of list) if(!uploadedFiles.find(x=>x.name===f.name)) uploadedFiles.push(f);
+  renderFileList();
+}
+function removeFile(i){uploadedFiles.splice(i,1);renderFileList();}
+function renderFileList(){
+  const el=document.getElementById('file-list');
+  if(!uploadedFiles.length){el.innerHTML='';return;}
+  el.innerHTML=uploadedFiles.map((f,i)=>`
+    <div class="file-item">
+      <span style="color:var(--accent);font-size:1.05rem">📄</span>
+      <span class="fname">${esc(f.name)}</span>
+      <span class="fsize">${(f.size/1024).toFixed(1)} KB</span>
+      <button class="btn btn-sm btn-outline-danger py-0 px-2 ms-auto" onclick="removeFile(${i})">×</button>
+    </div>`).join('');
+  document.getElementById('analyze-btn').disabled=false;
+  document.getElementById('upload-hint').textContent=`${uploadedFiles.length} file(s) ready`;
+}
+
+async function startAnalysis(){
+  if(!uploadedFiles.length)return;
+  const btn=document.getElementById('analyze-btn');
+  btn.disabled=true;btn.textContent='Uploading…';
+  const fd=new FormData();
+  uploadedFiles.forEach(f=>fd.append('files',f));
+  fd.append('methodology',selectedMethod);
+  let data;
+  try{
+    const r=await fetch('/api/analyze',{method:'POST',body:fd});
+    if(!r.ok)throw new Error(await r.text());
+    data=await r.json();
+  }catch(err){
+    alert('Upload failed: '+err.message);
+    btn.disabled=false;btn.textContent='Analyze Transcripts';return;
+  }
+  jobId=data.job_id;codeFreqs={};knownCodes=new Set();themeChipCount=0;dimChipCount=0;
+  document.getElementById('upload-section').style.display='none';
+  document.getElementById('analysis-section').style.display='block';
+  const sse=new EventSource(`/api/stream/${data.job_id}`);
+  sse.onmessage=e=>{try{handleEvent(JSON.parse(e.data),sse);}catch(err){console.error(err);}};
+  sse.onerror=()=>sse.close();
+}
+
+function handleEvent(ev,sse){
+  switch(ev.type){
+    case 'stage':
+      activateStage(ev.stage);setStatus(ev.message,true);
+      if(ev.stage==='coding')document.getElementById('coding-progress').style.display='block';
+      if(ev.stage==='theming'){
+        document.getElementById('coding-progress').style.display='none';
+        const tl=document.getElementById('lv-themes-list');
+        if(document.getElementById('lv-themes-placeholder'))tl.innerHTML='';
+      }
+      break;
+    case 'ingested':
+      document.getElementById('lv-seg-count').textContent=ev.segment_count;
+      document.getElementById('lv-seg-sub').textContent=`from ${ev.file_count} file(s)`;break;
+    case 'coded_segment':
+      updateProgBar(ev.done,ev.total);
+      document.getElementById('lv-coded-info').textContent=`${ev.done} coded`;
+      addCodes(ev.concepts?ev.concepts.map(c=>c.concept):(ev.codes||[]));break;
+    case 'coded':
+      setStatus(`Generated ${ev.total_codes} entries · ${ev.unique_codes} unique`,false);break;
+    case 'theme_progress':setStatus(ev.message,true);break;
+    case 'theme_ready':addThemeChip(ev.theme.name,false);break;
+    case 'dim_ready':addDimChip(ev.dimension.name,ev.dimension.theme_count);break;
+    case 'complete':
+      sse.close();markAllDone();setStatus('Analysis complete!',false);
+      document.getElementById('coding-progress').style.display='none';
+      setTimeout(()=>showResults(ev),700);break;
+    case 'error':
+      sse.close();setStatus('Error: '+ev.message,false);
+      const sb=document.getElementById('status-bar');
+      sb.style.background='#fff5f5';sb.style.border='1px solid #fed7d7';
+      document.getElementById('status-spinner').style.display='none';break;
+  }
+}
+
+function activateStage(stage){
+  const order=['ingesting','coding','theming','reporting'];
+  const idx=order.indexOf(stage);
+  order.forEach((s,i)=>{
+    const ss=document.getElementById(`ss-${s}`);
+    const sc=document.getElementById(`sc-${s}`);
+    const sl=document.getElementById(`sl-${s}`);
+    if(!ss)return;
+    ss.classList.toggle('active',i===idx);
+    ss.classList.toggle('done',i<idx);
+    if(sl)sl.style.background=i<idx?'var(--green)':'var(--border)';
+    if(sc)sc.textContent=i<idx?'✓':String(i+1);
+  });
+}
+function markAllDone(){
+  ['ingesting','coding','theming','reporting'].forEach((s,i)=>{
+    const ss=document.getElementById(`ss-${s}`);
+    const sc=document.getElementById(`sc-${s}`);
+    const sl=document.getElementById(`sl-${s}`);
+    if(ss){ss.classList.remove('active');ss.classList.add('done');}
+    if(sc)sc.textContent='✓';
+    if(sl)sl.style.background='var(--green)';
+  });
+}
+function setStatus(msg,thinking){
+  document.getElementById('status-bar').classList.toggle('thinking',thinking);
+  document.getElementById('status-spinner').style.display=thinking?'inline-block':'none';
+  document.getElementById('status-text').textContent=(thinking?'':'✓ ')+msg;
+}
+function updateProgBar(done,total){
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('prog-bar').style.width=pct+'%';
+  document.getElementById('coding-counter').textContent=`${done} / ${total}`;
+}
+
+function addCodes(labels){
+  labels.forEach(c=>{codeFreqs[c]=(codeFreqs[c]||0)+1;});
+  if(!renderHandle)renderHandle=setTimeout(()=>{renderCloud();renderHandle=null;},180);
+}
+function renderCloud(){
+  const sorted=Object.entries(codeFreqs).sort((a,b)=>b[1]-a[1]);
+  const countEl=document.getElementById('lv-code-count');
+  if(countEl)countEl.textContent=`(${sorted.length})`;
+  const max=sorted[0]?.[1]||1;
+  const cloud=document.getElementById('lv-codes-cloud');
+  const existing={};
+  cloud.querySelectorAll('.code-pill').forEach(el=>{existing[el.dataset.code]=el;});
+  sorted.slice(0,50).forEach(([code,freq],idx)=>{
+    const ratio=freq/max;
+    const size=(0.72+ratio*0.55).toFixed(2);
+    const hue=Math.round(210-idx*2.0);
+    const sat=Math.round(52+ratio*22);
+    const lit=Math.round(38+(1-ratio)*18);
+    const bg=`hsl(${hue},${sat}%,93%)`;
+    const fg=`hsl(${hue},${sat}%,${lit}%)`;
+    const border=`hsl(${hue},${sat}%,78%)`;
+    if(existing[code]){
+      const el=existing[code];
+      el.style.fontSize=size+'rem';el.style.color=fg;
+      el.style.background=bg;el.style.borderColor=border;
+      delete existing[code];
+    }else{
+      const pill=document.createElement('span');
+      pill.className='code-pill new';pill.dataset.code=code;pill.textContent=code;
+      pill.style.fontSize=size+'rem';pill.style.color=fg;
+      pill.style.background=bg;pill.style.borderColor=border;
+      cloud.appendChild(pill);
+      pill.addEventListener('animationend',()=>pill.classList.remove('new'));
+    }
+  });
+}
+
+function addThemeChip(name){
+  const container=document.getElementById('lv-themes-list');
+  const chip=document.createElement('div');chip.className='theme-chip';
+  const color=COLORS[themeChipCount%COLORS.length];
+  chip.style.borderLeftColor=color;chip.style.color=color;
+  chip.textContent=name;container.appendChild(chip);themeChipCount++;
+}
+function addDimChip(name,themeCount){
+  const container=document.getElementById('lv-themes-list');
+  if(dimChipCount===0)container.innerHTML='';
+  const chip=document.createElement('div');chip.className='dim-chip';
+  chip.style.background=COLORS[dimChipCount%COLORS.length];
+  chip.innerHTML=esc(name)+`<span class="theme-count-badge">${themeCount} themes</span>`;
+  container.appendChild(chip);dimChipCount++;
+}
+
+function showResults(data){
+  document.getElementById('analysis-section').style.display='none';
+  document.getElementById('results-section').style.display='block';
+  document.getElementById('btn-report').href=`/api/report/${jobId}`;
+  document.getElementById('btn-excel').href=`/api/download/${jobId}/excel`;
+  const m=data.methodology||'braun_clarke';
+  if(m==='gioia'){
+    const s=data.stats;
+    renderStats([[s.total_dimensions,'Aggregate Dimensions'],[s.total_second_order,'2nd-Order Themes'],
+                 [s.total_first_order,'1st-Order Concepts'],[s.total_segments,'Segments']]);
+    renderGioiaResults(data.dimensions||[]);
+    document.getElementById('gioia-results').style.display='block';
+  }else{
+    const s=data.stats;
+    renderStats([[s.total_themes,'Themes'],[s.total_segments,'Segments'],
+                 [s.total_files,'Transcripts'],[s.total_codes,'Unique Codes']]);
+    renderBCResults(data.themes||[],data.code_frequencies||{});
+    document.getElementById('bc-results').style.display='block';
+  }
+}
+
+function renderStats(pairs){
+  document.getElementById('stats-row').innerHTML=pairs.map(([n,l],i)=>`
+    <div class="col-6 col-md-3">
+      <div class="stat-card stat-reveal" style="animation-delay:${i*.08}s">
+        <div class="num">${n}</div><div class="lbl">${l}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderGioiaResults(dimensions){
+  document.getElementById('gioia-ds-table').innerHTML=buildDSTable(dimensions);
+  document.getElementById('gioia-dim-cards').innerHTML=dimensions.map((d,i)=>{
+    const color=COLORS[i%COLORS.length];
+    const themes=(d.second_order_themes||[]).map(t=>{
+      const concepts=(t.first_order_concepts||[]).map(c=>`
+        <div class="foc-item">
+          <span class="foc-label">${esc(c.concept)}</span>
+          ${c.verbatim?`<span class="foc-verbatim">"${esc(c.verbatim.slice(0,100))}${c.verbatim.length>100?'…':''}"</span>`:''}
+        </div>`).join('');
+      return `
+        <div class="theme-block">
+          <div class="theme-block-hdr" style="border-left:3px solid ${color}">
+            <h6>${esc(t.name)}</h6>
+            <span style="font-size:.72rem;color:var(--muted);font-weight:400;white-space:nowrap">${t.concept_count} concept${t.concept_count!==1?'s':''}</span>
+          </div>
+          <div class="theme-block-body">
+            ${t.description?`<div class="theme-desc-text">${esc(t.description)}</div>`:''}
+            ${concepts}
+          </div>
+        </div>`;
+    }).join('');
+    const totalConcepts=(d.second_order_themes||[]).reduce((s,t)=>s+(t.concept_count||0),0);
+    return `
+      <div class="dim-card" style="animation-delay:${i*.1}s">
+        <div class="dim-header" style="background:${color}">
+          <div class="dim-num">${String(i+1).padStart(2,'0')}</div>
+          <div style="flex:1">
+            <div style="font-size:1.15rem;font-weight:700;letter-spacing:-.01em">${esc(d.name)}</div>
+            <div style="opacity:.78;font-size:.8rem;margin-top:.2rem">${(d.second_order_themes||[]).length} themes &nbsp;·&nbsp; ${totalConcepts} concepts</div>
+          </div>
+        </div>
+        <div class="dim-body">
+          ${d.description?`<div class="dim-description">${esc(d.description)}</div>`:''}
+          ${themes}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function buildDSTable(dimensions){
+  if(!dimensions.length)return'';
+  let rows='';
+  dimensions.forEach((d,di)=>{
+    const color=COLORS[di%COLORS.length];
+    const colorBg=color+'15';
+    const dimConceptCount=(d.second_order_themes||[]).reduce((s,t)=>s+(t.concept_count||0),0)||1;
+    let firstDim=true;
+    (d.second_order_themes||[]).forEach(t=>{
+      const themeConceptCount=(t.first_order_concepts||[]).length||1;
+      let firstTheme=true;
+      const concepts=t.first_order_concepts||[];
+      if(!concepts.length)concepts.push({concept:'(no concepts)',verbatim:''});
+      concepts.forEach(c=>{
+        let cells=`<td><span class="ds-concept-label">${esc(c.concept)}</span>${c.verbatim?`<span class="ds-verbatim">"${esc(c.verbatim.slice(0,70))}${c.verbatim.length>70?'…':''}"</span>`:''}</td>`;
+        if(firstTheme){
+          cells+=`<td class="ds-theme-cell" rowspan="${themeConceptCount}" style="background:${colorBg};border-left-color:${color}">${esc(t.name)}</td>`;
+          firstTheme=false;
+        }
+        if(firstDim){
+          cells+=`<td class="ds-dim-cell" rowspan="${dimConceptCount}" style="background:${colorBg};border-left-color:${color}"><strong style="color:${color}">${esc(d.name)}</strong></td>`;
+          firstDim=false;
+        }
+        rows+=`<tr>${cells}</tr>`;
+      });
+    });
+  });
+  return`<div class="ds-table-wrap"><table class="ds-tbl">
+    <thead><tr>
+      <th>1st Order Concepts</th><th>2nd Order Themes</th><th>Aggregate Dimensions</th>
+    </tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderBCResults(themes,codeFrequencies){
+  const freqEntries=Object.entries(codeFreqs&&Object.keys(codeFreqs).length?codeFreqs:codeFrequencies)
+    .sort((a,b)=>b[1]-a[1]).slice(0,30);
+  if(freqEntries.length){
+    document.getElementById('codes-overview').style.display='block';
+    const maxF=freqEntries[0][1];
+    document.getElementById('codes-freq-bars').innerHTML=freqEntries.map(([code,freq])=>`
+      <div class="cf-item">
+        <span class="cf-name" title="${esc(code)}">${esc(code)}</span>
+        <div class="cf-bar-w"><div class="cf-bar" style="width:${Math.round(freq/maxF*100)}%"></div></div>
+        <span class="cf-count">${freq}</span>
+      </div>`).join('');
+  }
+  document.getElementById('theme-cards').innerHTML=themes.map((t,i)=>{
+    const color=COLORS[i%COLORS.length];
+    const codes=(t.codes||[]).map(c=>`<span class="code-badge">${esc(c)}</span>`).join('');
+    const quotes=(t.representative_quotes||[]).slice(0,3).map(q=>`
+      <blockquote class="quote">&ldquo;${esc(q.text)}&rdquo;
+        <div class="src">— ${esc(q.source_file)}${q.participant?' · '+esc(q.participant):''}</div>
+      </blockquote>`).join('');
+    return`
+      <div class="theme-card" style="animation-delay:${i*.07}s">
+        <div class="tc-header" style="background:${color}">
+          <div class="tc-num">${String(i+1).padStart(2,'0')}</div>
+          <div>
+            <div style="font-size:1.12rem;font-weight:700">${esc(t.name)}</div>
+            <div style="opacity:.78;font-size:.81rem">${t.segment_count} segments · ${(t.codes||[]).length} codes</div>
+          </div>
+        </div>
+        <div class="tc-body"><div class="tc-description">${esc(t.description)}</div><div class="mb-3">${codes}</div>${quotes}</div>
+      </div>`;
+  }).join('');
+}
+
+function resetUI(){
+  uploadedFiles=[];jobId=null;codeFreqs={};knownCodes=new Set();themeChipCount=0;dimChipCount=0;
+  ['results-section','analysis-section','gioia-results','bc-results','codes-overview']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  document.getElementById('upload-section').style.display='block';
+  document.getElementById('file-list').innerHTML='';
+  document.getElementById('file-input').value='';
+  document.getElementById('analyze-btn').disabled=true;
+  document.getElementById('analyze-btn').textContent='Analyze Transcripts';
+  document.getElementById('upload-hint').textContent='Add files to begin';
+  document.getElementById('lv-codes-cloud').innerHTML='';
+  document.getElementById('lv-themes-list').innerHTML=
+    '<div id="lv-themes-placeholder" style="color:var(--muted);font-size:.83rem;">Themes appear after coding completes…</div>';
+  document.getElementById('lv-seg-count').textContent='—';
+  document.getElementById('lv-seg-sub').textContent='';
+  document.getElementById('lv-coded-info').textContent='';
+  const cc=document.getElementById('lv-code-count');if(cc)cc.textContent='';
+  document.getElementById('theme-cards').innerHTML='';
+  document.getElementById('gioia-dim-cards').innerHTML='';
+  document.getElementById('gioia-ds-table').innerHTML='';
+  ['ingesting','coding','theming','reporting'].forEach((s,i)=>{
+    const ss=document.getElementById(`ss-${s}`);
+    const sc=document.getElementById(`sc-${s}`);
+    const sl=document.getElementById(`sl-${s}`);
+    if(ss)ss.className='stage-step';
+    if(sc)sc.textContent=String(i+1);
+    if(sl)sl.style.background='var(--border)';
+  });
+  const sb=document.getElementById('status-bar');
+  sb.style.background='';sb.style.border='';
+  document.getElementById('status-spinner').style.display='inline-block';
+  document.getElementById('status-bar').classList.add('thinking');
+  document.getElementById('status-text').textContent='Initialising…';
+}
+
+function esc(s){
+  if(!s)return'';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+selectMethod('gioia');
+</script>
+</body>
+</html>

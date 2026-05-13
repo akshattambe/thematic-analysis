@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thematic Analysis Report</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<style>
+  :root {
+    --accent: #2E86AB;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #2c3e50;
+    --muted: #6c757d;
+  }
+  body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+  h1,h2,h3,h4,h5 { font-family: Georgia, serif; }
+  .hero { background: linear-gradient(135deg, #1a3a4a 0%, #2E86AB 100%); color: white; padding: 3rem 0 2.5rem; }
+  .hero h1 { font-size: 2.4rem; font-weight: 700; margin-bottom: .4rem; }
+  .hero .subtitle { font-size: 1.05rem; opacity: .85; font-style: italic; }
+  .stat-card { background: var(--card); border-radius: 10px; padding: 1.4rem 1.6rem;
+               box-shadow: 0 2px 12px rgba(0,0,0,.07); text-align: center; }
+  .stat-card .num { font-size: 2.4rem; font-weight: 700; color: var(--accent); }
+  .stat-card .lbl { font-size: .85rem; color: var(--muted); text-transform: uppercase;
+                    letter-spacing: .06em; font-family: sans-serif; }
+  .section-title { font-size: 1.5rem; color: var(--accent); border-bottom: 2px solid var(--accent);
+                   padding-bottom: .4rem; margin: 2.5rem 0 1.4rem; }
+  .theme-card { background: var(--card); border-radius: 12px; box-shadow: 0 2px 14px rgba(0,0,0,.07);
+                margin-bottom: 2rem; overflow: hidden; }
+  .theme-header { padding: 1.2rem 1.6rem; color: white; }
+  .theme-body { padding: 1.6rem; }
+  .theme-description { line-height: 1.85; color: var(--text); white-space: pre-line; }
+  .code-badge { display: inline-block; background: #e8f4fd; color: #1a5276;
+                border: 1px solid #aed6f1; border-radius: 20px;
+                padding: .28rem .8rem; font-size: .82rem;
+                font-family: -apple-system, sans-serif; margin: .2rem; }
+  blockquote.quote { border-left: 4px solid var(--accent); padding: .8rem 1.2rem;
+                     background: #f8fbfd; border-radius: 0 8px 8px 0;
+                     font-style: italic; margin: .8rem 0; font-size: .97rem; }
+  blockquote.quote .source { font-style: normal; font-size: .8rem; color: var(--muted);
+                              font-family: sans-serif; margin-top: .4rem; }
+  .seg-row td { font-size: .88rem; vertical-align: top; padding: .6rem .75rem !important; }
+  .seg-row td:first-child { color: var(--muted); font-family: monospace; white-space: nowrap; }
+  .chart-wrap { background: var(--card); border-radius: 10px; padding: 1rem;
+                box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 1.5rem; }
+  .methodology { background: var(--card); border-radius: 10px; padding: 2rem;
+                  box-shadow: 0 2px 12px rgba(0,0,0,.06); font-size: .95rem; line-height: 1.8; }
+  .methodology h5 { color: var(--accent); }
+  .wc-img { width: 100%; border-radius: 8px; margin-bottom: 1rem; }
+  footer { background: #1a3a4a; color: rgba(255,255,255,.6); text-align: center;
+           padding: 1.5rem; margin-top: 4rem; font-size: .85rem; font-family: sans-serif; }
+  .nav-pills .nav-link { font-family: sans-serif; font-size: .88rem; }
+  .nav-pills .nav-link.active { background: var(--accent); }
+  @media print {
+    .no-print { display: none !important; }
+    .theme-card { break-inside: avoid; }
+    footer { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="container">
+    <h1>Thematic Analysis Report</h1>
+    <p class="subtitle">Inductive Thematic Analysis · Braun &amp; Clarke (2006) · Generated {{ generated_at }}</p>
+  </div>
+</div>
+
+<div class="container py-4">
+
+  <!-- Summary stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="num">{{ total_themes }}</div>
+        <div class="lbl">Themes</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="num">{{ total_segments }}</div>
+        <div class="lbl">Segments</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="num">{{ total_files }}</div>
+        <div class="lbl">Transcripts</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="num">{{ total_codes }}</div>
+        <div class="lbl">Unique Codes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <ul class="nav nav-pills mb-4 no-print" id="mainTabs">
+    <li class="nav-item"><a class="nav-link active" href="#sec-themes">Themes</a></li>
+    <li class="nav-item"><a class="nav-link" href="#sec-viz">Visualisations</a></li>
+    <li class="nav-item"><a class="nav-link" href="#sec-segments">Coded Segments</a></li>
+    <li class="nav-item"><a class="nav-link" href="#sec-method">Methodology</a></li>
+  </ul>
+
+  <!-- ── THEMES ─────────────────────────────────────────── -->
+  <h2 class="section-title" id="sec-themes">Themes</h2>
+
+  {% set colors = ["#2E86AB","#A23B72","#F18F01","#C73E1D","#3B6064","#44BBA4","#E94F37","#7B68EE","#20B2AA","#FF6B6B","#4ECDC4","#45B7D1"] %}
+
+  {% for theme in themes %}
+  {% set color = colors[loop.index0 % colors|length] %}
+  <div class="theme-card" id="theme-{{ theme.id }}">
+    <div class="theme-header" style="background: {{ color }};">
+      <div class="d-flex align-items-center gap-3">
+        <span style="font-size:1.8rem;font-weight:700;opacity:.35;">{{ "%02d" % loop.index }}</span>
+        <div>
+          <h4 class="mb-0" style="font-size:1.25rem;">{{ theme.name }}</h4>
+          <small style="opacity:.8;">{{ theme.segment_count }} segments · {{ theme.codes|length }} codes</small>
+        </div>
+      </div>
+    </div>
+    <div class="theme-body">
+
+      {% if viz.wordclouds and theme.id in viz.wordclouds %}
+      <img src="{{ viz.wordclouds[theme.id] }}" class="wc-img" alt="Word cloud for {{ theme.name }}">
+      {% endif %}
+
+      <h5 class="mt-2 mb-2" style="font-size:1rem;color:#555;font-family:sans-serif;">Description</h5>
+      <div class="theme-description">{{ theme.description }}</div>
+
+      <h5 class="mt-3 mb-2" style="font-size:1rem;color:#555;font-family:sans-serif;">Codes</h5>
+      <div class="mb-3">
+        {% for code in theme.codes %}
+        <span class="code-badge">{{ code }}</span>
+        {% endfor %}
+      </div>
+
+      {% if theme.representative_quotes %}
+      <h5 class="mt-3 mb-2" style="font-size:1rem;color:#555;font-family:sans-serif;">Representative Quotes</h5>
+      {% for q in theme.representative_quotes %}
+      <blockquote class="quote">
+        "{{ q.text }}"
+        <div class="source">
+          — {{ q.source_file }}{% if q.participant %} · {{ q.participant }}{% endif %}
+        </div>
+      </blockquote>
+      {% endfor %}
+      {% endif %}
+
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- ── VISUALISATIONS ────────────────────────────────── -->
+  <h2 class="section-title" id="sec-viz">Visualisations</h2>
+
+  {% if viz.theme_frequency %}
+  <div class="chart-wrap">{{ viz.theme_frequency | safe }}</div>
+  {% endif %}
+
+  {% if viz.heatmap %}
+  <div class="chart-wrap">{{ viz.heatmap | safe }}</div>
+  {% endif %}
+
+  {% if viz.code_frequency %}
+  <div class="chart-wrap">{{ viz.code_frequency | safe }}</div>
+  {% endif %}
+
+  {% if viz.word_frequency %}
+  <div class="chart-wrap">{{ viz.word_frequency | safe }}</div>
+  {% endif %}
+
+  <!-- ── CODED SEGMENTS ────────────────────────────────── -->
+  <h2 class="section-title" id="sec-segments">Coded Segments</h2>
+  <p class="text-muted" style="font-family:sans-serif;font-size:.9rem;">
+    All {{ total_segments }} segments with assigned codes and analytical memos.
+    Use <kbd>Ctrl+F</kbd> to search.
+  </p>
+
+  <div class="chart-wrap p-2">
+    <div style="overflow-x:auto;">
+      <table class="table table-hover table-sm mb-0">
+        <thead class="table-light">
+          <tr style="font-family:sans-serif;font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;">
+            <th>Source</th>
+            <th>Participant</th>
+            <th>Text</th>
+            <th>Codes</th>
+            <th>Memo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cs in result.coded_segments %}
+          <tr class="seg-row">
+            <td>{{ cs.segment.source_file }}</td>
+            <td>{{ cs.segment.participant or "—" }}</td>
+            <td style="max-width:420px;">{{ cs.segment.text[:300] }}{% if cs.segment.text|length > 300 %}…{% endif %}</td>
+            <td style="min-width:160px;">
+              {% for code in cs.codes %}
+              <span class="code-badge" style="font-size:.75rem;">{{ code }}</span>
+              {% endfor %}
+            </td>
+            <td style="max-width:220px;font-style:italic;font-size:.83rem;color:#555;">{{ cs.memo }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── METHODOLOGY ────────────────────────────────────── -->
+  <h2 class="section-title" id="sec-method">Methodology</h2>
+  <div class="methodology">
+    <h5>Approach</h5>
+    <p>
+      This analysis employed an <strong>inductive thematic analysis</strong> following the six-phase
+      framework of Braun &amp; Clarke (2006). Thematic analysis is a method for identifying, analysing,
+      and reporting patterns (themes) within data; this approach treats themes as patterns of shared
+      meaning unified by a central concept or idea.
+    </p>
+
+    <h5>Process</h5>
+    <ol>
+      <li><strong>Familiarisation</strong> — Transcripts loaded and segmented into analytical units
+          (speaker turns or paragraph blocks of 30–400 words).</li>
+      <li><strong>Generating initial codes</strong> — Each segment coded inductively using
+          <em>claude-haiku-4-5</em>; 1–3 codes generated per segment capturing semantic and latent meaning.</li>
+      <li><strong>Searching for themes</strong> — All codes submitted to <em>claude-opus-4-7</em>
+          (with extended thinking) for semantic clustering into candidate themes.</li>
+      <li><strong>Reviewing themes</strong> — Each candidate theme reviewed against the coded segments;
+          representative quotes identified.</li>
+      <li><strong>Defining &amp; naming themes</strong> — Final theme names and descriptions written
+          by <em>claude-opus-4-7</em> in academic register, refined with adaptive reasoning.</li>
+      <li><strong>Producing the report</strong> — This interactive HTML report plus Excel and JSON exports.</li>
+    </ol>
+
+    <h5>Data</h5>
+    <ul>
+      <li><strong>Transcripts analysed:</strong> {{ total_files }}</li>
+      <li><strong>Total segments:</strong> {{ total_segments }}</li>
+      <li><strong>Unique codes:</strong> {{ total_codes }}</li>
+      <li><strong>Themes identified:</strong> {{ total_themes }}</li>
+    </ul>
+
+    <h5>Reference</h5>
+    <p>
+      Braun, V., &amp; Clarke, V. (2006). Using thematic analysis in psychology.
+      <em>Qualitative Research in Psychology, 3</em>(2), 77–101.
+      <a href="https://doi.org/10.1191/1478088706qp063oa" target="_blank">https://doi.org/10.1191/1478088706qp063oa</a>
+    </p>
+  </div>
+
+</div><!-- /container -->
+
+<footer>
+  Generated with Thematic Analysis Tool · Powered by Anthropic Claude · {{ generated_at }}
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Smooth-scroll nav links
+  document.querySelectorAll('#mainTabs a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+      document.querySelectorAll('#mainTabs a').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

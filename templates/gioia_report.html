@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gioia Analysis Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<style>
+:root{
+  --accent:#2E86AB;--bg:#f8f9fb;--surface:#fff;
+  --text:#1a2536;--text2:#3d4f63;--muted:#718096;--border:#e2e8f0;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.07),0 1px 8px rgba(0,0,0,.04);
+  --shadow:0 2px 8px rgba(0,0,0,.07),0 4px 20px rgba(0,0,0,.05);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.1);
+}
+*{box-sizing:border-box;}
+body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+h1,h2,h3,h4,h5,h6{font-family:'Inter',system-ui,sans-serif;}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#0a1a2a 0%,#1a3d5c 55%,#2E86AB 100%);color:white;padding:3.5rem 0 2.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.05) 1px,transparent 1px);background-size:28px 28px;}
+.hero-inner{position:relative;z-index:1;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:.22rem .8rem;font-family:'Inter',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:1rem;color:rgba(255,255,255,.85);}
+.hero h1{font-size:2.4rem;font-weight:700;margin-bottom:.45rem;letter-spacing:-.02em;}
+.hero-sub{font-family:'Lora',serif;font-style:italic;opacity:.78;font-size:1rem;margin-bottom:1.3rem;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:.5rem;}
+.hero-pill{background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:.25rem .72rem;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:500;color:rgba(255,255,255,.88);}
+
+/* Sticky nav */
+.sticky-nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:.6rem 0;}
+.nav-inner{display:flex;align-items:center;gap:.25rem;overflow-x:auto;scrollbar-width:none;}
+.nav-inner::-webkit-scrollbar{display:none;}
+.nav-lnk{display:inline-block;padding:.33rem .82rem;border-radius:6px;font-family:'Inter',sans-serif;font-size:.81rem;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap;transition:all .15s;cursor:pointer;border:none;background:none;}
+.nav-lnk:hover{background:#f0f4f8;color:var(--text);}
+.nav-lnk.active{background:var(--accent);color:white;}
+
+/* Stat cards */
+.stat-card{background:var(--surface);border-radius:12px;padding:1.4rem 1.5rem;box-shadow:var(--shadow);border:1px solid var(--border);text-align:center;}
+.stat-card .num{font-family:'Inter',sans-serif;font-size:2.5rem;font-weight:700;color:var(--accent);line-height:1;letter-spacing:-.03em;}
+.stat-card .lbl{font-family:'Inter',sans-serif;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.4rem;}
+
+/* Section titles */
+.sec-title{font-size:1.35rem;font-weight:700;color:var(--text);margin:2.8rem 0 1.2rem;padding-bottom:.5rem;border-bottom:2.5px solid var(--accent);}
+
+/* DS table */
+.ds-wrap{overflow-x:auto;border-radius:12px;box-shadow:var(--shadow);}
+.ds-table{width:100%;border-collapse:collapse;font-family:'Inter',sans-serif;font-size:.86rem;}
+.ds-table thead th{background:#0a1a2a;color:rgba(255,255,255,.9);padding:.85rem 1rem;text-align:left;font-size:.71rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
+.ds-foc{padding:.6rem .9rem;border-bottom:1px solid #f0f4f8;vertical-align:top;min-width:220px;}
+.ds-concept-label{font-weight:600;display:block;color:var(--text);}
+.ds-verbatim{display:block;font-family:'Lora',serif;font-style:italic;color:var(--muted);font-size:.8rem;margin-top:.2rem;line-height:1.5;}
+.ds-theme{padding:.8rem 1rem;border-bottom:1px solid #e8edf3;border-left:3px solid;font-weight:600;color:var(--text);vertical-align:middle;min-width:200px;font-size:.86rem;}
+.ds-dim{padding:.8rem 1rem;border-bottom:1px solid #e8edf3;border-left:4px solid;vertical-align:middle;min-width:180px;font-size:.86rem;font-weight:700;}
+
+/* Dimension cards */
+.dim-card{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:2.5rem;overflow:hidden;transition:box-shadow .2s;}
+.dim-card:hover{box-shadow:var(--shadow-lg);}
+.dim-card-header{border-left:5px solid;padding:1.4rem 1.9rem;background:linear-gradient(135deg,#fafbfc,#f0f4f8);display:flex;align-items:flex-start;gap:1.2rem;}
+.dim-badge{width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:white;font-family:'Inter',sans-serif;font-weight:700;font-size:1.1rem;flex-shrink:0;}
+.dim-card-header h4{margin:0 0 .25rem;font-size:1.2rem;font-weight:700;letter-spacing:-.01em;color:var(--text);}
+.dim-meta{font-family:'Inter',sans-serif;font-size:.78rem;color:var(--muted);}
+.dim-body{padding:1.7rem 1.9rem;}
+.dim-description{font-family:'Lora',serif;line-height:1.92;font-size:.97rem;color:var(--text2);margin-bottom:1.8rem;white-space:pre-line;}
+
+/* Theme blocks */
+.theme-block{border:1px solid var(--border);border-radius:10px;margin-bottom:1.1rem;overflow:hidden;border-left:3px solid;}
+.theme-block-header{background:#f8fafc;padding:.72rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;}
+.theme-block-header h6{margin:0;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:700;color:var(--text);flex:1;}
+.theme-concept-count{font-family:'Inter',sans-serif;font-size:.72rem;color:var(--muted);font-weight:400;background:#edf2f7;border-radius:12px;padding:.1rem .5rem;white-space:nowrap;}
+.theme-block-body{padding:1rem 1.2rem;}
+.theme-desc{font-family:'Lora',serif;font-style:italic;font-size:.91rem;color:var(--text2);line-height:1.78;margin-bottom:.9rem;}
+
+/* FOC items */
+.foc-item{display:flex;gap:.75rem;padding:.5rem .75rem;margin-bottom:.35rem;background:#f8fbfd;border-radius:8px;font-family:'Inter',sans-serif;font-size:.83rem;border:1px solid #edf2f7;}
+.foc-label{font-weight:600;min-width:165px;flex-shrink:0;color:var(--text);}
+.foc-verbatim{font-family:'Lora',serif;font-style:italic;color:var(--muted);line-height:1.55;}
+
+/* Charts & wordcloud */
+.chart-wrap{background:var(--surface);border-radius:12px;padding:1.2rem;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:1.6rem;}
+.wc-img{width:100%;border-radius:10px;margin-bottom:1.6rem;}
+
+/* Methodology */
+.methodology{background:var(--surface);border-radius:12px;padding:2.2rem;box-shadow:var(--shadow);border:1px solid var(--border);}
+.methodology h5{font-family:'Inter',sans-serif;color:var(--accent);font-weight:700;margin-top:1.6rem;margin-bottom:.6rem;font-size:1rem;}
+.methodology h5:first-child{margin-top:0;}
+.methodology p,.methodology li{font-family:'Lora',serif;font-size:.96rem;line-height:1.88;color:var(--text2);}
+
+footer{background:#0a1a2a;color:rgba(255,255,255,.42);text-align:center;padding:1.8rem;margin-top:5rem;font-family:'Inter',sans-serif;font-size:.82rem;}
+
+@media print{
+  .no-print{display:none!important;}
+  .sticky-nav{display:none!important;}
+  .dim-card,.theme-block{break-inside:avoid;}
+  .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  footer{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="container hero-inner">
+    <div class="hero-eyebrow">✦ Qualitative Research Report</div>
+    <h1>Gioia Methodology Report</h1>
+    <p class="hero-sub">Grounded Theory Analysis · Gioia, Corley &amp; Hamilton (2013)</p>
+    <div class="hero-pills">
+      <span class="hero-pill">{{ total_dimensions }} Aggregate Dimensions</span>
+      <span class="hero-pill">{{ total_second_order }} 2nd-Order Themes</span>
+      <span class="hero-pill">{{ total_first_order }} 1st-Order Concepts</span>
+      <span class="hero-pill">{{ total_segments }} Segments</span>
+      <span class="hero-pill">Generated {{ generated_at }}</span>
+    </div>
+  </div>
+</div>
+
+<nav class="sticky-nav no-print">
+  <div class="container nav-inner">
+    <button class="nav-lnk active" data-target="sec-overview">Overview</button>
+    <button class="nav-lnk" data-target="sec-structure">Data Structure</button>
+    <button class="nav-lnk" data-target="sec-dimensions">Dimensions</button>
+    <button class="nav-lnk" data-target="sec-viz">Visualisations</button>
+    <button class="nav-lnk" data-target="sec-method">Methodology</button>
+  </div>
+</nav>
+
+<div class="container py-4">
+
+  <!-- Stats -->
+  <div class="row g-3 mb-5" id="sec-overview">
+    <div class="col-6 col-md-3">
+      <div class="stat-card"><div class="num">{{ total_dimensions }}</div><div class="lbl">Aggregate Dimensions</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card"><div class="num">{{ total_second_order }}</div><div class="lbl">2nd-Order Themes</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card"><div class="num">{{ total_first_order }}</div><div class="lbl">1st-Order Concepts</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card"><div class="num">{{ total_segments }}</div><div class="lbl">Segments</div></div>
+    </div>
+  </div>
+
+  <!-- Data Structure -->
+  <h2 class="sec-title" id="sec-structure">Data Structure</h2>
+  <p style="font-family:'Inter',sans-serif;font-size:.9rem;color:var(--muted);margin-bottom:1.3rem;">
+    The hallmark Gioia figure — 1st-order concepts (informant language) →
+    2nd-order themes (theoretical language) → aggregate dimensions (highest abstraction).
+  </p>
+
+  {% if viz.data_structure %}
+  <div class="chart-wrap p-2 mb-4">{{ viz.data_structure | safe }}</div>
+  {% endif %}
+
+  {% if viz.sunburst %}
+  <div class="chart-wrap">{{ viz.sunburst | safe }}</div>
+  {% endif %}
+
+  <!-- Aggregate Dimensions -->
+  <h2 class="sec-title" id="sec-dimensions">Aggregate Dimensions</h2>
+
+  {% set colors = ["#2E86AB","#A23B72","#F18F01","#C73E1D","#3B6064","#44BBA4","#E94F37","#7B68EE"] %}
+
+  {% for dim in result.aggregate_dimensions %}
+  {% set color = colors[loop.index0 % colors|length] %}
+  <div class="dim-card" id="dim-{{ dim.id }}">
+    <div class="dim-card-header" style="border-left-color:{{ color }}">
+      <div class="dim-badge" style="background:{{ color }}">{{ "%02d" % loop.index }}</div>
+      <div style="flex:1">
+        <h4>{{ dim.name }}</h4>
+        <div class="dim-meta">
+          {{ dim.theme_count }} 2nd-order theme{{ "s" if dim.theme_count != 1 }} &nbsp;·&nbsp;
+          {{ dim.concept_count }} concept{{ "s" if dim.concept_count != 1 }}
+        </div>
+      </div>
+    </div>
+    <div class="dim-body">
+
+      {% if viz.wordclouds and dim.id in viz.wordclouds %}
+      <img src="{{ viz.wordclouds[dim.id] }}" class="wc-img" alt="Word cloud — {{ dim.name }}">
+      {% endif %}
+
+      <div class="dim-description">{{ dim.description }}</div>
+
+      {% for theme in dim.second_order_themes %}
+      <div class="theme-block" style="border-left-color:{{ color }}">
+        <div class="theme-block-header">
+          <h6>{{ theme.name }}</h6>
+          <span class="theme-concept-count">{{ theme.concept_count }} concept{{ "s" if theme.concept_count != 1 }}</span>
+        </div>
+        <div class="theme-block-body">
+          {% if theme.description %}
+          <div class="theme-desc">{{ theme.description }}</div>
+          {% endif %}
+          {% for foc in theme.first_order_concepts[:10] %}
+          <div class="foc-item">
+            <span class="foc-label">{{ foc.concept }}</span>
+            {% if foc.verbatim %}
+            <span class="foc-verbatim">"{{ foc.verbatim[:130] }}{% if foc.verbatim|length > 130 %}…{% endif %}"</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% if theme.concept_count > 10 %}
+          <div style="font-family:'Inter',sans-serif;font-size:.78rem;color:var(--muted);padding:.3rem .75rem;">
+            + {{ theme.concept_count - 10 }} more concepts
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Visualisations -->
+  <h2 class="sec-title" id="sec-viz">Visualisations</h2>
+
+  {% if viz.concept_frequency %}
+  <div class="chart-wrap">{{ viz.concept_frequency | safe }}</div>
+  {% endif %}
+
+  <!-- Methodology -->
+  <h2 class="sec-title" id="sec-method">Methodology</h2>
+  <div class="methodology">
+    <h5>Approach</h5>
+    <p>
+      This analysis employed <strong>Gioia Methodology</strong> (Gioia, Corley &amp; Hamilton, 2013),
+      a systematic, rigorous approach to grounded-theory-style qualitative research designed to meet
+      standards of scholarly rigour while remaining close to participant data.
+    </p>
+
+    <h5>Three-Tier Coding Structure</h5>
+    <ol>
+      <li>
+        <strong>First-order concepts</strong> — Each transcript segment coded using the
+        <em>informant's own language</em>; labels stay close to the data with verbatim excerpts.
+        Generated by <em>claude-haiku-4-5</em> with Gioia-specific prompting (2–4 concepts per segment).
+      </li>
+      <li>
+        <strong>Second-order themes</strong> — Theoretical categories derived by clustering
+        first-order concept labels using <em>claude-opus-4-7</em> (adaptive thinking).
+        Written in researcher/theoretical language, more abstract than 1st-order labels.
+      </li>
+      <li>
+        <strong>Aggregate dimensions</strong> — Overarching theoretical constructs grouping
+        2nd-order themes; represent the core theoretical contribution of the analysis.
+        Rich descriptions synthesised by <em>claude-opus-4-7</em> in academic register.
+      </li>
+    </ol>
+
+    <h5>Data</h5>
+    <ul>
+      <li><strong>Transcripts analysed:</strong> {{ total_files }}</li>
+      <li><strong>Total segments:</strong> {{ total_segments }}</li>
+      <li><strong>First-order concepts:</strong> {{ total_first_order }}</li>
+      <li><strong>Second-order themes:</strong> {{ total_second_order }}</li>
+      <li><strong>Aggregate dimensions:</strong> {{ total_dimensions }}</li>
+    </ul>
+
+    <h5>Reference</h5>
+    <p>
+      Gioia, D. A., Corley, K. G., &amp; Hamilton, A. L. (2013). Seeking qualitative rigor in inductive
+      research: Notes on the Gioia methodology. <em>Organizational Research Methods, 16</em>(1), 15–31.
+      <a href="https://doi.org/10.1177/1094428112452151" target="_blank" style="color:var(--accent)">
+        https://doi.org/10.1177/1094428112452151
+      </a>
+    </p>
+  </div>
+
+</div>
+
+<footer>
+  Generated with Thematic Analysis Tool · Powered by Anthropic Claude · {{ generated_at }}
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const navLinks = document.querySelectorAll('.nav-lnk[data-target]');
+navLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    const target = document.getElementById(link.dataset.target);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    navLinks.forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+  });
+});
+
+// Scroll spy
+const sectionIds = ['sec-overview','sec-structure','sec-dimensions','sec-viz','sec-method'];
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.toggle('active', l.dataset.target === entry.target.id));
+    }
+  });
+}, { rootMargin: '-35% 0px -55% 0px' });
+sectionIds.forEach(id => { const el = document.getElementById(id); if (el) observer.observe(el); });
+</script>
+</body>
+</html>

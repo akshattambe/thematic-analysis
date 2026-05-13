@@ -1,0 +1,20 @@
+# Secrets — never commit
+.env
+
+# Analysis outputs (generated at runtime, can be large)
+data/outputs/
+data/transcripts/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# macOS
+.DS_Store
+
+# IDE / Claude local settings
+.claude/settings.local.json

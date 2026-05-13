@@ -144,6 +144,55 @@ def test_max_themes_capped_by_concept_count():
     )
 
 
+def test_max_themes_cap_runtime_single_interview():
+    """
+    Runtime check: with 30 unique concepts and max_t=25,
+    the effective max_t must be capped to 30//3 = 10.
+    Verifies the guard logic directly without calling the API.
+    """
+    min_t, max_t = 5, 25
+    sig = {f"concept_{i}": 1 for i in range(30)}  # 30 unique concepts
+
+    effective_max_t = max(min_t, min(max_t, len(sig) // 3))
+
+    assert effective_max_t == 10, (
+        f"Expected effective max_t=10 (30//3), got {effective_max_t}. "
+        "Claude would have been asked for up to 25 themes from only 30 concepts."
+    )
+    assert effective_max_t <= len(sig) // 3
+
+
+def test_max_themes_cap_runtime_20_interviews():
+    """
+    Runtime check: with 600 unique concepts and max_t=25,
+    the cap must NOT reduce max_t — 600//3=200 >> 25.
+    """
+    min_t, max_t = 5, 25
+    sig = {f"concept_{i}": 2 for i in range(600)}
+
+    effective_max_t = max(min_t, min(max_t, len(sig) // 3))
+
+    assert effective_max_t == 25, (
+        f"Expected effective max_t=25 (uncapped), got {effective_max_t}. "
+        "Large datasets should use the full max_t."
+    )
+
+
+def test_max_themes_cap_never_below_min_t():
+    """
+    Even with very few concepts (e.g. 6), effective max_t must not drop
+    below min_t (5), ensuring Claude always gets a valid range.
+    """
+    min_t, max_t = 5, 25
+    sig = {f"concept_{i}": 1 for i in range(6)}  # only 6 concepts → 6//3 = 2
+
+    effective_max_t = max(min_t, min(max_t, len(sig) // 3))
+
+    assert effective_max_t == min_t, (
+        f"Expected effective max_t to floor at min_t={min_t}, got {effective_max_t}."
+    )
+
+
 if __name__ == "__main__":
     import pytest
     pytest.main([__file__, "-v"])

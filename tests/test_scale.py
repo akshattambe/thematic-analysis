@@ -131,6 +131,19 @@ def test_source_file_count_20_interviews():
     assert len(source_files) == 20
 
 
+def test_max_themes_capped_by_concept_count():
+    """
+    With a small concept set (single interview), max_t must be capped so
+    Claude is never asked for more themes than the data can support.
+    Each theme requires at least 3 concepts: max_t <= len(sig) // 3.
+    """
+    themer_source = (Path(__file__).parent.parent / "src_gioia" / "themer.py").read_text()
+    assert "max_t = max(min_t, min(max_t, len(sig) // 3))" in themer_source, (
+        "themer.py must cap max_t based on available concepts to prevent "
+        "empty-theme errors on small datasets."
+    )
+
+
 if __name__ == "__main__":
     import pytest
     pytest.main([__file__, "-v"])

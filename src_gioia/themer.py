@@ -111,6 +111,10 @@ def _cluster_second_order(
         # Fall back to top-N concepts by frequency (no filter)
         sig = dict(counter.most_common(min(1000, len(counter))))
 
+    # Cap max_t so we never ask for more themes than the data can support.
+    # Each theme requires at least 3 concepts, so max_t <= len(sig) // 3.
+    max_t = max(min_t, min(max_t, len(sig) // 3))
+
     concepts_block = "\n".join(
         f"  {c} — \u00d7{f}"
         for c, f in sorted(sig.items(), key=lambda x: -x[1])

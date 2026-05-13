@@ -188,7 +188,7 @@ def _run_gioia_pipeline(job_id: str, tmp_dir: Path, out_dir: Path) -> None:
                                 "theme_count": dim.theme_count}})
 
         second_order, aggregate = build_gioia_structure(
-            concepts, min_themes=5, max_themes=18,
+            concepts, min_themes=5, max_themes=25,
             on_progress=lambda msg: emit({"type": "theme_progress", "message": msg}),
             on_theme_ready=on_theme_ready,
             on_dimension_ready=on_dimension_ready,

@@ -109,7 +109,7 @@ def _cluster_second_order(
     sig = {c: f for c, f in counter.items() if f >= min_freq}
     if len(sig) < max_t * 3:
         # Fall back to top-N concepts by frequency (no filter)
-        sig = dict(counter.most_common(min(500, len(counter))))
+        sig = dict(counter.most_common(min(1000, len(counter))))
 
     concepts_block = "\n".join(
         f"  {c} — \u00d7{f}"

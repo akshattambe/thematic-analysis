@@ -38,8 +38,8 @@ def _make_concepts(n: int, unique_ratio: float = 0.6) -> list:
 # ── Config tests ──────────────────────────────────────────────────────────────
 
 def test_concurrent_requests_raised():
-    assert config.MAX_CONCURRENT_REQUESTS == 20, (
-        f"Expected 20, got {config.MAX_CONCURRENT_REQUESTS}. "
+    assert config.MAX_CONCURRENT_REQUESTS == 50, (
+        f"Expected 50, got {config.MAX_CONCURRENT_REQUESTS}. "
         "This value should be raised for 20-interview workloads."
     )
 
@@ -61,23 +61,23 @@ def test_concept_cap_single_interview():
 
 def test_concept_cap_20_interviews_old_limit():
     """Simulate 20 interviews — old 200-cap would drop many concepts."""
-    concepts = _make_concepts(800, unique_ratio=0.75)  # ~600 unique
+    concepts = _make_concepts(2000, unique_ratio=0.75)  # ~1500 unique
     counter = Counter(c.concept.lower().strip() for c in concepts)
     old_cap = dict(counter.most_common(min(200, len(counter))))
-    new_cap = dict(counter.most_common(min(500, len(counter))))
+    new_cap = dict(counter.most_common(min(1000, len(counter))))
     assert len(new_cap) > len(old_cap), (
-        "New cap (500) should pass more concepts than old cap (200)."
+        "New cap (1000) should pass more concepts than old cap (200)."
     )
-    assert len(new_cap) == 500
+    assert len(new_cap) == 1000
     assert len(old_cap) == 200
 
 
-def test_concept_cap_does_not_exceed_500():
-    """Even with 2000 unique concepts the cap stays at 500."""
-    concepts = _make_concepts(2000, unique_ratio=1.0)
+def test_concept_cap_does_not_exceed_1000():
+    """Even with 5000 unique concepts the cap stays at 1000."""
+    concepts = _make_concepts(5000, unique_ratio=1.0)
     counter = Counter(c.concept.lower().strip() for c in concepts)
-    sig = dict(counter.most_common(min(500, len(counter))))
-    assert len(sig) == 500
+    sig = dict(counter.most_common(min(1000, len(counter))))
+    assert len(sig) == 1000
 
 
 def test_frequency_filter_fallback_still_works():
@@ -108,11 +108,11 @@ def test_max_themes_raised_in_pipeline():
     We do this by inspecting the source directly.
     """
     app_source = (Path(__file__).parent.parent / "app.py").read_text()
-    assert "max_themes=18" in app_source, (
-        "app.py should pass max_themes=18 to build_gioia_structure for 20-interview scale."
+    assert "max_themes=25" in app_source, (
+        "app.py should pass max_themes=25 to build_gioia_structure for 20-interview scale."
     )
     assert "max_themes=12" not in app_source, (
-        "Old max_themes=12 should be replaced with 18."
+        "Old max_themes=12 should be replaced with 25."
     )
 
 

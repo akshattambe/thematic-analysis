@@ -6,9 +6,12 @@ Stage 2: 2nd-order themes → aggregate dimensions
 Stage 3: Synthesise rich descriptions for each aggregate dimension
 """
 import json
+import logging
 import re
 from collections import Counter
 from typing import Callable, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 import anthropic
 
@@ -73,6 +76,9 @@ Write a rich academic description (2–3 paragraphs) suitable for a dissertation
 Return ONLY valid JSON:
 {{"description": "two to three paragraphs..."}}"""
 
+# Maximum concepts sent to Claude for clustering (keeps prompt + response within token limits)
+_CLUSTERING_CAP = 300
+
 
 def _parse_json(raw: str) -> dict:
     raw = raw.strip()
@@ -99,6 +105,18 @@ def _parse_json(raw: str) -> dict:
     return {}
 
 
+def _best_theme_idx(concept_label: str, themes: List[dict]) -> int:
+    """Return the index (0-based) of the theme whose name+description best overlaps with concept_label."""
+    tokens = set(concept_label.lower().split())
+    best_idx, best_score = 0, -1
+    for i, t in enumerate(themes):
+        haystack = (t.get("name", "") + " " + t.get("description", "")).lower()
+        score = sum(1 for tok in tokens if tok in haystack)
+        if score > best_score:
+            best_score, best_idx = score, i
+    return best_idx
+
+
 def _cluster_second_order(
     concepts: List[FirstOrderConcept], min_t: int, max_t: int
 ) -> List[dict]:
@@ -115,29 +133,41 @@ def _cluster_second_order(
     # Each theme requires at least 3 concepts, so max_t <= len(sig) // 3.
     max_t = max(min_t, min(max_t, len(sig) // 3))
 
+    # Cap concepts sent to Claude to avoid token budget exhaustion.
+    # Remaining concepts are assigned to nearest theme after clustering via keyword overlap.
+    clustering_sig = dict(sorted(sig.items(), key=lambda x: -x[1])[:_CLUSTERING_CAP])
+
     concepts_block = "\n".join(
         f"  {c} — \u00d7{f}"
-        for c, f in sorted(sig.items(), key=lambda x: -x[1])
+        for c, f in sorted(clustering_sig.items(), key=lambda x: -x[1])
     )
     n_files = len({c.segment.source_file for c in concepts})
     # Build prompt without .format() to avoid KeyError on user data containing { }
     prompt = (
         _SECOND_ORDER_TMPL
-        .replace("{n_concepts}", str(len(sig)))
+        .replace("{n_concepts}", str(len(clustering_sig)))
         .replace("{n_files}", str(n_files))
         .replace("{concepts_block}", concepts_block)
         .replace("{min_t}", str(min_t))
         .replace("{max_t}", str(max_t))
     )
-    client = anthropic.Anthropic()
-    resp = client.messages.create(
-        model="claude-opus-4-7",
-        max_tokens=4000,
-        thinking={"type": "adaptive"},
-        messages=[{"role": "user", "content": prompt}],
+    logger.info(
+        "Clustering %d/%d concepts into %d–%d themes (cap=%d)",
+        len(clustering_sig), len(sig), min_t, max_t, _CLUSTERING_CAP,
     )
-    text = next((b.text for b in resp.content if b.type == "text"), "")
-    return _parse_json(text).get("themes", [])
+    client = anthropic.Anthropic()
+    with client.messages.stream(
+        model="claude-opus-4-7",
+        max_tokens=8000,
+        messages=[{"role": "user", "content": prompt}],
+    ) as stream:
+        text = stream.get_final_text()
+
+    parsed = _parse_json(text)
+    themes = parsed.get("themes", [])
+    if not themes:
+        logger.error("No themes parsed. Raw response text: %s", text[:500])
+    return themes
 
 
 def _cluster_aggregate(themes: List[SecondOrderTheme]) -> List[dict]:
@@ -151,13 +181,13 @@ def _cluster_aggregate(themes: List[SecondOrderTheme]) -> List[dict]:
         .replace("{themes_block}", themes_block)
     )
     client = anthropic.Anthropic()
-    resp = client.messages.create(
+    with client.messages.stream(
         model="claude-opus-4-7",
         max_tokens=3000,
-        thinking={"type": "adaptive"},
         messages=[{"role": "user", "content": prompt}],
-    )
-    text = next((b.text for b in resp.content if b.type == "text"), "")
+    ) as stream:
+        text = stream.get_final_text()
+
     return _parse_json(text).get("dimensions", [])
 
 
@@ -171,13 +201,13 @@ def _synthesise_dimension(dim: AggregateDimension) -> str:
         .replace("{themes_block}", themes_block)
     )
     client = anthropic.Anthropic()
-    resp = client.messages.create(
+    with client.messages.stream(
         model="claude-opus-4-7",
         max_tokens=2000,
-        thinking={"type": "adaptive"},
         messages=[{"role": "user", "content": prompt}],
-    )
-    text = next((b.text for b in resp.content if b.type == "text"), "")
+    ) as stream:
+        text = stream.get_final_text()
+
     return _parse_json(text).get("description", dim.description)
 
 
@@ -208,10 +238,14 @@ def build_gioia_structure(
         label_map.setdefault(key, []).append(c)
 
     second_order: List[SecondOrderTheme] = []
+    matched_keys: set = set()
+
     for i, rt in enumerate(raw_themes, 1):
         matched: List[FirstOrderConcept] = []
         for label in rt.get("concepts", []):
-            matched.extend(label_map.get(label.lower().strip(), []))
+            key = label.lower().strip()
+            matched.extend(label_map.get(key, []))
+            matched_keys.add(key)
         theme = SecondOrderTheme(
             id=i,
             name=rt.get("name", f"Theme {i}"),
@@ -221,6 +255,19 @@ def build_gioia_structure(
         second_order.append(theme)
         if on_theme_ready:
             on_theme_ready(theme)
+
+    # Assign concepts that Claude didn't mention to the nearest theme via keyword overlap.
+    # This handles concepts beyond the _CLUSTERING_CAP that were never shown to Claude.
+    unmatched_keys = set(label_map.keys()) - matched_keys
+    if unmatched_keys and second_order:
+        theme_dicts = [{"name": t.name, "description": t.description} for t in second_order]
+        for key in unmatched_keys:
+            idx = _best_theme_idx(key, theme_dicts)
+            second_order[idx].first_order_concepts.extend(label_map[key])
+        logger.info(
+            "Assigned %d unmatched concept label(s) to nearest themes via keyword overlap",
+            len(unmatched_keys),
+        )
 
     # Stage 2: cluster 2nd-order themes → aggregate dimensions
     if on_progress:

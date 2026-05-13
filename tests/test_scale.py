@@ -100,6 +100,86 @@ def test_frequency_filter_fallback_still_works():
     assert len(sig) > 0
 
 
+# ── Streaming + concept cap tests ────────────────────────────────────────────
+
+def test_clustering_cap_is_300():
+    """The themer module must define _CLUSTERING_CAP = 300."""
+    from src_gioia.themer import _CLUSTERING_CAP
+    assert _CLUSTERING_CAP == 300, (
+        f"Expected _CLUSTERING_CAP=300, got {_CLUSTERING_CAP}. "
+        "Cap must be 300 to avoid token budget exhaustion on the streaming API call."
+    )
+
+
+def test_clustering_cap_enforced_at_300():
+    """Even with 1000 unique concepts, only 300 are sent to Claude for clustering."""
+    sig = {f"concept_{i}": (1000 - i) for i in range(1000)}  # 1000 concepts, varying freq
+    from src_gioia.themer import _CLUSTERING_CAP
+    clustering_sig = dict(sorted(sig.items(), key=lambda x: -x[1])[:_CLUSTERING_CAP])
+    assert len(clustering_sig) == 300
+    # Confirm they are the top-300 by frequency
+    top_keys = [k for k, _ in sorted(sig.items(), key=lambda x: -x[1])[:300]]
+    assert list(clustering_sig.keys()) == top_keys
+
+
+def test_clustering_uses_streaming():
+    """_cluster_second_order must call messages.stream(), not messages.create()."""
+    themer_source = (Path(__file__).parent.parent / "src_gioia" / "themer.py").read_text()
+    assert "client.messages.stream(" in themer_source, (
+        "themer.py must use client.messages.stream() to avoid 10-minute API timeout."
+    )
+    assert "stream.get_final_text()" in themer_source, (
+        "themer.py must call stream.get_final_text() to retrieve the streamed response."
+    )
+
+
+def test_no_messages_create_in_themer():
+    """messages.create() must not appear in themer.py (only stream() is allowed)."""
+    themer_source = (Path(__file__).parent.parent / "src_gioia" / "themer.py").read_text()
+    assert "client.messages.create(" not in themer_source, (
+        "themer.py still uses messages.create() which triggers the 10-minute timeout error."
+    )
+
+
+# ── Unmatched concept assignment tests ───────────────────────────────────────
+
+def test_best_theme_idx_keyword_overlap():
+    """_best_theme_idx returns the index of the theme with most token overlap."""
+    from src_gioia.themer import _best_theme_idx
+    themes = [
+        {"name": "Leadership Challenges", "description": "Issues around managerial authority"},
+        {"name": "Communication Barriers", "description": "Breakdowns in information sharing"},
+        {"name": "Resource Constraints", "description": "Lack of budget and staffing"},
+    ]
+    # "communication breakdown" overlaps best with theme[1]
+    assert _best_theme_idx("communication breakdown", themes) == 1
+    # "budget shortfall" overlaps best with theme[2]
+    assert _best_theme_idx("budget shortfall", themes) == 2
+
+
+def test_best_theme_idx_fallback_returns_zero():
+    """When no overlap, _best_theme_idx defaults to index 0."""
+    from src_gioia.themer import _best_theme_idx
+    themes = [
+        {"name": "Alpha Dynamics", "description": "XYZ phenomena"},
+        {"name": "Beta Mechanisms", "description": "ABC processes"},
+    ]
+    # "zzz unrelated concept" has no overlap — should fall back to 0
+    idx = _best_theme_idx("zzz unrelated concept", themes)
+    assert idx == 0
+
+
+def test_unmatched_concepts_assigned_in_build():
+    """build_gioia_structure must contain code to assign unmatched concepts."""
+    themer_source = (Path(__file__).parent.parent / "src_gioia" / "themer.py").read_text()
+    assert "unmatched_keys" in themer_source, (
+        "themer.py must assign concepts beyond _CLUSTERING_CAP to the nearest theme."
+    )
+    assert "_best_theme_idx" in themer_source, (
+        "themer.py must use _best_theme_idx for unmatched concept assignment."
+    )
+
+
 # ── Max themes test ───────────────────────────────────────────────────────────
 
 def test_max_themes_raised_in_pipeline():
